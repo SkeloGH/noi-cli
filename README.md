@@ -36,7 +36,7 @@ noi
 ## From source
 
 ```bash
-git clone https://github.com/skelogh/noi-cli.git
+git clone https://github.com/SkeloGH/noi-cli.git
 cd noi-cli
 npm install
 npm run build
