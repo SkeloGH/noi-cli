@@ -1,0 +1,56 @@
+{
+  "name": "@skelogh/noi-cli",
+  "version": "1.0.0",
+  "description": "CLI brown noise player — stream brown noise to your default audio output",
+  "keywords": [
+    "cli",
+    "brown-noise",
+    "noise",
+    "audio",
+    "focus",
+    "sleep",
+    "sound"
+  ],
+  "license": "MIT",
+  "author": "skelogh",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/skelogh/noi-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/skelogh/noi-cli/issues"
+  },
+  "homepage": "https://github.com/skelogh/noi-cli#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "bin": {
+    "noi": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepack": "npm run build",
+    "start": "node dist/cli.js",
+    "dev": "tsc && node dist/cli.js"
+  },
+  "dependencies": {
+    "@echogarden/audio-io": "^0.4.2"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.2",
+    "typescript": "^6.0.2"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ]
+}
