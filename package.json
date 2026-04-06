@@ -28,12 +28,17 @@
     "noi": "dist/cli.js"
   },
   "files": [
-    "dist",
+    "dist/cli.js",
+    "dist/helpers.js",
+    "dist/brownNoise.js",
+    "dist/volumeUi.js",
+    "dist/interactiveVolume.js",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
     "build": "tsc",
+    "test": "npm run build && node --test test/",
     "prepack": "npm run build",
     "start": "node dist/cli.js",
     "dev": "tsc && node dist/cli.js"
