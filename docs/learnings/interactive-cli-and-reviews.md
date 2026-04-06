@@ -31,3 +31,9 @@ Do not add clamps or bounds checks that the mathematics or types already prevent
 ## Teardown and layout
 
 When the UI layer already ends each paint with a full line break, avoid adding another line break on shutdown unless there is a separate reason. Duplicate newlines often show up as an extra blank gap before the shell prompt.
+
+## Raw stdin and interrupt handling
+
+When standard input is in raw mode for interactive key handling, the terminal often stops sending the usual interrupt signal for the usual “stop this process” key. The same key may arrive only as a control byte on the stream. Do not assume that key metadata from the line-reading layer will always name that key; the byte may be present without a usable key object. Treat the control byte as a first-class signal if you need reliable exit from that path.
+
+If the user can still send an interrupt signal at the process level, registering a one-shot handler means a second interrupt does nothing while the process is stuck waiting on cleanup. Allow repeated interrupt delivery, and if shutdown is already in progress when another arrives, exit the process without waiting for work that may never finish.

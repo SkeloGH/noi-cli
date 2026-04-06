@@ -116,6 +116,21 @@ async function main(): Promise<void> {
   }
 
   /**
+   * Raw mode often delivers Ctrl+C as ETX (0x03) only; `key` may be undefined or not `name: "c"`.
+   */
+  function isInterruptKey(str: string, key: readline.Key | undefined): boolean {
+    if (key?.ctrl === true && key.name === "c") {
+      return true;
+    }
+    for (let i = 0; i < str.length; i += 1) {
+      if (str.charCodeAt(i) === 3) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * When stdin is a TTY, enable ↑ / ↓ to change volume. Restores the terminal on teardown.
    * In raw mode, Ctrl+C may arrive as a keypress; we handle that and still listen for SIGINT.
    */
@@ -129,12 +144,12 @@ async function main(): Promise<void> {
     stdin.setRawMode(true);
     stdin.resume();
 
-    const onKeypress = (_str: string, key: readline.Key | undefined): void => {
-      if (!key) {
+    const onKeypress = (str: string, key: readline.Key | undefined): void => {
+      if (isInterruptKey(str, key)) {
+        requestShutdown();
         return;
       }
-      if (key.ctrl && key.name === "c") {
-        requestShutdown();
+      if (!key) {
         return;
       }
       if (key.name === "up") {
@@ -184,6 +199,7 @@ async function main(): Promise<void> {
 
   const shutdown = async (): Promise<void> => {
     if (shuttingDown) {
+      process.exit(process.exitCode ?? 1);
       return;
     }
     shuttingDown = true;
@@ -201,10 +217,10 @@ async function main(): Promise<void> {
     void shutdown();
   });
 
-  process.once("SIGINT", () => {
+  process.on("SIGINT", () => {
     void shutdown();
   });
-  process.once("SIGTERM", () => {
+  process.on("SIGTERM", () => {
     void shutdown();
   });
 }
