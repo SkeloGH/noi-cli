@@ -1,6 +1,6 @@
-# @skelogh/noi-cli
+# muril
 
-Minimal CLI that plays **brown noise** through your default audio output. Stop with **Ctrl+C**.
+**muril** (*murmur* + *‑il*) is a minimal CLI that plays **brown noise** through your default audio output. Stop with **Ctrl+C**.
 
 ## Requirements
 
@@ -12,16 +12,16 @@ Audio output uses [`@echogarden/audio-io`](https://github.com/echogarden-project
 ## Install
 
 ```bash
-npm install @skelogh/noi-cli
+npm install muril
 ```
 
 ## Run with npx
 
 ```bash
-npx @skelogh/noi-cli
+npx muril
 ```
 
-That runs the `noi` binary from the package (no global install required).
+That runs the `muril` binary from the package (no global install required).
 
 **Options:** `--volume <0-1>` sets the starting level (default `1`). `-v` / `--version` prints the package version.
 
@@ -30,19 +30,21 @@ That runs the `noi` binary from the package (no global install required).
 After a global install, you can run:
 
 ```bash
-noi
+muril
 ```
 
 ## From source
 
 ```bash
-git clone https://github.com/SkeloGH/noi-cli.git
-cd noi-cli
+git clone https://github.com/SkeloGH/muril.git
+cd muril
 npm install
 npm run build
 npm test
 node dist/cli.js
 ```
+
+To use the **`muril`** command name locally: `npm link` in this directory, then run `muril`.
 
 ## License
 

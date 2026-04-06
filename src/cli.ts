@@ -38,10 +38,10 @@ function parseCli(): { volume: number } {
       console.log(getPackageVersion());
       process.exit(0);
     case "usage":
-      console.error("Usage: noi [--volume <0-1>] [-v|--version]");
+      console.error("Usage: muril [--volume <0-1>] [-v|--version]");
       process.exit(1);
     case "invalid-volume":
-      console.error("noi: --volume expects a number between 0 and 1");
+      console.error("muril: --volume expects a number between 0 and 1");
       process.exit(1);
     case "run":
       return { volume: parsed.volume };

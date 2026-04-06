@@ -1,9 +1,10 @@
 {
-  "name": "@skelogh/noi-cli",
+  "name": "muril",
   "version": "0.1.0",
-  "description": "CLI brown noise player — stream brown noise to your default audio output",
+  "description": "muril — stream brown noise to your default audio output (more noise types planned)",
   "keywords": [
     "cli",
+    "muril",
     "brown-noise",
     "noise",
     "audio",
@@ -12,20 +13,17 @@
     "sound"
   ],
   "license": "MIT",
-  "author": "skelogh",
+  "author": "Aaron Gonzalez <dev.aaron.gh@gmail.com>",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SkeloGH/noi-cli.git"
+    "url": "git+https://github.com/SkeloGH/muril.git"
   },
   "bugs": {
-    "url": "https://github.com/SkeloGH/noi-cli/issues"
+    "url": "https://github.com/SkeloGH/muril/issues"
   },
-  "homepage": "https://github.com/SkeloGH/noi-cli#readme",
-  "publishConfig": {
-    "access": "public"
-  },
+  "homepage": "https://github.com/SkeloGH/muril#readme",
   "bin": {
-    "noi": "dist/cli.js"
+    "muril": "dist/cli.js"
   },
   "files": [
     "dist/cli.js",
@@ -39,7 +37,8 @@
   "scripts": {
     "build": "tsc",
     "test": "npm run build && node --test test/",
-    "prepack": "npm run build",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm test",
     "start": "node dist/cli.js",
     "dev": "tsc && node dist/cli.js"
   },

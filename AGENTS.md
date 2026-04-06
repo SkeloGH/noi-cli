@@ -6,14 +6,14 @@ Provider-agnostic orientation for AI agents (Claude, GPT-4, Gemini, Cursor, Copi
 
 ## What this project is
 
-`noi` is a minimal CLI that synthesizes brown noise in real time and streams it to the system's default audio output. It has no network I/O, no configuration files, and no dependencies beyond a single native audio addon.
+**muril** is a minimal CLI that synthesizes brown noise in real time and streams it to the system's default audio output. It has no network I/O, no configuration files, and no dependencies beyond a single native audio addon.
 
 ---
 
 ## File map
 
 ```
-src/cli.ts                entry — compiles to dist/cli.js (the `noi` binary); composition, I/O, signals
+src/cli.ts                entry — compiles to dist/cli.js (the `muril` binary); composition, I/O, signals
 src/helpers.ts            side-effect-free helpers (CLI parse, JSON version parse, interrupt key)
 src/brownNoise.ts         brown noise + Int16 PCM fill (`createBrownNoiseState`, `fillPcmSamples`)
 src/volumeUi.ts           stderr volume status line (`createVolumeLineWriter`)
@@ -27,7 +27,7 @@ docs/learnings/cli-helpers-and-tests.md  helpers split, tests, npm publish scope
 docs/testability-assessment.md  how each unit is testable and what stays integration-bound
 ```
 
-There is no linting configuration. **`npm test`** builds and runs **`node --test test/`** (helpers, brown noise, volume UI, interactive stdin).
+There is no linting configuration. `**npm test**` builds and runs `**node --test test/**` (helpers, brown noise, volume UI, interactive stdin).
 
 ---
 
@@ -39,9 +39,11 @@ npm run build      # tsc → dist/cli.js + dist/helpers.js
 npm test           # build + unit tests (entire test/ directory)
 npm run dev        # build + run immediately
 npm start          # run dist/cli.js (requires prior build)
-node dist/cli.js --volume 0.7
-node dist/cli.js --version
+muril --volume 0.7
+muril --version
 ```
+
+From a dev checkout without `npm link`, use `node dist/cli.js` with the same flags.
 
 TypeScript is the only build step. There is no bundler, no transpiler other than `tsc`, and no asset pipeline.
 
@@ -49,7 +51,7 @@ TypeScript is the only build step. There is no bundler, no transpiler other than
 
 ## Architecture
 
-**`src/helpers.ts`** holds parsing and interrupt detection with **no** `process` / `console` / `exit` — unit-tested. **`src/brownNoise.ts`** holds synthesis state and `fillPcmSamples` (injectable **`random`** for tests). **`src/volumeUi.ts`** writes the stderr volume line. **`src/interactiveVolume.ts`** binds stdin keypress when TTY; interrupt detection is delegated via **`handlers.isInterruptKey`** from helpers (no direct import of interrupt rules there). **`src/cli.ts`** defines `parseCli()` and `getPackageVersion()` (side effects) and **`main()`** (wires audio + TTY + signals). Importing `helpers` / `brownNoise` / etc. does **not** run the CLI.
+`**src/helpers.ts**` holds parsing and interrupt detection with **no** `process` / `console` / `exit` — unit-tested. `**src/brownNoise.ts`** holds synthesis state and `fillPcmSamples` (injectable `**random**` for tests). `**src/volumeUi.ts**` writes the stderr volume line. `**src/interactiveVolume.ts**` binds stdin keypress when TTY; interrupt detection is delegated via `**handlers.isInterruptKey**` from helpers (no direct import of interrupt rules there). `**src/cli.ts**` defines `parseCli()` and `getPackageVersion()` (side effects) and `**main()**` (wires audio + TTY + signals). Importing `helpers` / `brownNoise` / etc. does **not** run the CLI.
 
 ### Audio synthesis — `fillPcmSamples` (`brownNoise.ts`)
 
@@ -85,13 +87,15 @@ SIGINT, SIGTERM, and Ctrl+C in raw mode all route through the same function.
 
 ## Key invariants — do not break these
 
-| Invariant | Where it matters |
-|-----------|-----------------|
-| `shutdown()` must always reach `process.exit()` | Wrap `dispose()` in try/catch; never use bare `void shutdown()` without ensuring the function itself handles rejections |
-| Audio callback is synchronous | `fillPcmSamples` must not await, schedule, or allocate; it runs on every pull (~100 ms) |
-| `CHANNEL_COUNT = 1` is not configurable | `fillPcmSamples` writes flat mono samples; changing `CHANNEL_COUNT` without rewriting the fill loop produces corrupt audio |
-| `parseCli()` runs inside `main()`, not at module load | Side-effect-free module top level; `process.exit()` must not be reachable on import |
-| Status line cursor model | `createVolumeLineWriter` lines always end with `\n`; do not add extra newlines in teardown or setup |
+
+| Invariant                                             | Where it matters                                                                                                           |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `shutdown()` must always reach `process.exit()`       | Wrap `dispose()` in try/catch; never use bare `void shutdown()` without ensuring the function itself handles rejections    |
+| Audio callback is synchronous                         | `fillPcmSamples` must not await, schedule, or allocate; it runs on every pull (~100 ms)                                    |
+| `CHANNEL_COUNT = 1` is not configurable               | `fillPcmSamples` writes flat mono samples; changing `CHANNEL_COUNT` without rewriting the fill loop produces corrupt audio |
+| `parseCli()` runs inside `main()`, not at module load | Side-effect-free module top level; `process.exit()` must not be reachable on import                                        |
+| Status line cursor model                              | `createVolumeLineWriter` lines always end with `\n`; do not add extra newlines in teardown or setup                        |
+
 
 ---
 
@@ -114,3 +118,4 @@ Derived from `docs/learnings/interactive-cli-and-reviews.md`:
 - Adding a heavy test framework — `node:test` + `test/*.test.cjs` is enough for unit tests.
 - Changing `bufferDuration` (100 ms) or `SAMPLE_RATE` (44100) without understanding the downstream effects on the pull callback timing.
 - Touching `LEAK` or `INTEGRATOR_SCALE` without understanding the noise spectrum implications; these values were tuned by ear.
+

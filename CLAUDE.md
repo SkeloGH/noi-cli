@@ -23,7 +23,7 @@ Unit tests cover **`helpers`**, **`brownNoise`**, **`volumeUi`**, and **`interac
 
 **`src/interactiveVolume.ts`** — `bindStdinKeypress`, `VOLUME_STEP`; interrupt policy comes from handlers (typically `isInterruptKey` from helpers).
 
-**`src/cli.ts`** — compiles to `dist/cli.js` (the `noi` binary) and composes the modules above.
+**`src/cli.ts`** — compiles to `dist/cli.js` (the `muril` binary) and composes the modules above.
 
 **Audio generation** — brown noise is synthesized in real time using a leaky integrator over white noise (`LEAK = 0.99925`). Each audio callback calls `fillPcmSamples`, which writes Int16 PCM samples into the buffer handed to `@echogarden/audio-io`.
 
