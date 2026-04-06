@@ -32,6 +32,10 @@ Do not add clamps or bounds checks that the mathematics or types already prevent
 
 When the UI layer already ends each paint with a full line break, avoid adding another line break on shutdown unless there is a separate reason. Duplicate newlines often show up as an extra blank gap before the shell prompt.
 
+## See also
+
+- [`cli-helpers-and-tests.md`](./cli-helpers-and-tests.md) — splitting **`helpers.ts`** from the entry file, test scope, and npm `files`.
+
 ## Raw stdin and interrupt handling
 
 When standard input is in raw mode for interactive key handling, the terminal often stops sending the usual interrupt signal for the usual “stop this process” key. The same key may arrive only as a control byte on the stream. Do not assume that key metadata from the line-reading layer will always name that key; the byte may be present without a usable key object. Treat the control byte as a first-class signal if you need reliable exit from that path.

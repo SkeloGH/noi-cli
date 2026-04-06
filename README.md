@@ -40,6 +40,7 @@ git clone https://github.com/SkeloGH/noi-cli.git
 cd noi-cli
 npm install
 npm run build
+npm test
 node dist/cli.js
 ```
 

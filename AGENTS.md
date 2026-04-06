@@ -13,14 +13,21 @@ Provider-agnostic orientation for AI agents (Claude, GPT-4, Gemini, Cursor, Copi
 ## File map
 
 ```
-src/cli.ts          sole source file — compiles to dist/cli.js (the `noi` binary)
-package.json        version, bin entry, npm scripts
-tsconfig.json       target ES2020, module Node16, strict mode
-dist/               compiled output (not committed)
-docs/learnings/     project-specific engineering principles — read before changing code
+src/cli.ts                entry — compiles to dist/cli.js (the `noi` binary); composition, I/O, signals
+src/helpers.ts            side-effect-free helpers (CLI parse, JSON version parse, interrupt key)
+src/brownNoise.ts         brown noise + Int16 PCM fill (`createBrownNoiseState`, `fillPcmSamples`)
+src/volumeUi.ts           stderr volume status line (`createVolumeLineWriter`)
+src/interactiveVolume.ts  raw TTY stdin keypress (`bindStdinKeypress`, `VOLUME_STEP`)
+test/*.test.cjs           unit tests (run after `npm run build`; `node --test test/`)
+package.json              version, bin entry, npm scripts
+tsconfig.json             target ES2020, module Node16, strict mode
+dist/                     compiled output (not committed)
+docs/learnings/           project-specific engineering principles — read before changing code
+docs/learnings/cli-helpers-and-tests.md  helpers split, tests, npm publish scope
+docs/testability-assessment.md  how each unit is testable and what stays integration-bound
 ```
 
-There are no tests, no linting configuration, and no additional source files.
+There is no linting configuration. **`npm test`** builds and runs **`node --test test/`** (helpers, brown noise, volume UI, interactive stdin).
 
 ---
 
@@ -28,7 +35,8 @@ There are no tests, no linting configuration, and no additional source files.
 
 ```bash
 npm install        # first time only
-npm run build      # tsc → dist/cli.js
+npm run build      # tsc → dist/cli.js + dist/helpers.js
+npm test           # build + unit tests (entire test/ directory)
 npm run dev        # build + run immediately
 npm start          # run dist/cli.js (requires prior build)
 node dist/cli.js --volume 0.7
@@ -41,26 +49,26 @@ TypeScript is the only build step. There is no bundler, no transpiler other than
 
 ## Architecture
 
-Everything lives in `main()`. The module top level only defines constants and helper functions with no side effects.
+**`src/helpers.ts`** holds parsing and interrupt detection with **no** `process` / `console` / `exit` — unit-tested. **`src/brownNoise.ts`** holds synthesis state and `fillPcmSamples` (injectable **`random`** for tests). **`src/volumeUi.ts`** writes the stderr volume line. **`src/interactiveVolume.ts`** binds stdin keypress when TTY; interrupt detection is delegated via **`handlers.isInterruptKey`** from helpers (no direct import of interrupt rules there). **`src/cli.ts`** defines `parseCli()` and `getPackageVersion()` (side effects) and **`main()`** (wires audio + TTY + signals). Importing `helpers` / `brownNoise` / etc. does **not** run the CLI.
 
-### Audio synthesis — `fillPcmChunk`
+### Audio synthesis — `fillPcmSamples` (`brownNoise.ts`)
 
 Brown noise is produced by a leaky integrator over white noise:
 
 ```
-brown = brown * LEAK + white      (LEAK = 0.99925, rolling state inside main())
+brown = brown * LEAK + white      (LEAK = 0.99925, state in `BrownNoiseState`)
 output = tanh(brown * INTEGRATOR_SCALE) * MAX_SAMPLE * playbackVolume
 ```
 
 `Math.tanh` soft-limits the output; combined with `DIGITAL_HEADROOM = 0.92`, the sample value is always within `[-30145, 30145]` — well inside Int16 range. No additional clamping is needed or present.
 
-The callback is pull-style: `@echogarden/audio-io` calls `fillPcmChunk` when it needs more samples. The callback is synchronous; `main()` is `async` only because the addon import is dynamic.
+The callback is pull-style: `@echogarden/audio-io` calls the fill when it needs more samples. The callback is synchronous; `main()` is `async` only because the addon import is dynamic.
 
-### Volume control — `setupInteractiveVolume`
+### Volume control — `bindStdinKeypress` + `createVolumeLineWriter`
 
-Only active when `stdin.isTTY`. Enables raw mode, listens for ↑/↓ keys (±5%), and routes Ctrl+C to `shutdown()`. Returns a teardown function that removes the listener, restores terminal state, and pauses stdin.
+Only active when `stdin.isTTY`. Enables raw mode, listens for ↑/↓ keys (±`VOLUME_STEP` = 5%), and routes Ctrl+C to `shutdown()`. Returns a teardown function that removes the listener, restores terminal state, and pauses stdin.
 
-`writeVolumeLine` uses a `volumeStatusLineInitialized` flag to distinguish the first paint (no cursor-up) from subsequent updates (`\x1b[A\r\x1b[K…\n`). After every paint the cursor lands on the line *below* the status display, keeping any other stderr output clean.
+`createVolumeLineWriter` uses an internal first-paint flag to distinguish the first line (no cursor-up) from subsequent updates (`\x1b[A\r\x1b[K…\n`). After every paint the cursor lands on the line *below* the status display, keeping any other stderr output clean. The **initial** `writeVolumeLine` in `main()` runs only when `process.stdin.isTTY` (same contract as interactive keys: no stderr volume UI when stdin is piped or non-interactive).
 
 ### Shutdown — `shutdown()`
 
@@ -80,10 +88,10 @@ SIGINT, SIGTERM, and Ctrl+C in raw mode all route through the same function.
 | Invariant | Where it matters |
 |-----------|-----------------|
 | `shutdown()` must always reach `process.exit()` | Wrap `dispose()` in try/catch; never use bare `void shutdown()` without ensuring the function itself handles rejections |
-| Audio callback is synchronous | `fillPcmChunk` must not await, schedule, or allocate; it runs on every pull (~100 ms) |
-| `CHANNEL_COUNT = 1` is not configurable | `fillPcmChunk` writes flat mono samples; changing `CHANNEL_COUNT` without rewriting the fill loop produces corrupt audio |
+| Audio callback is synchronous | `fillPcmSamples` must not await, schedule, or allocate; it runs on every pull (~100 ms) |
+| `CHANNEL_COUNT = 1` is not configurable | `fillPcmSamples` writes flat mono samples; changing `CHANNEL_COUNT` without rewriting the fill loop produces corrupt audio |
 | `parseCli()` runs inside `main()`, not at module load | Side-effect-free module top level; `process.exit()` must not be reachable on import |
-| Status line cursor model | `writeVolumeLine` always ends with `\n`; do not add extra newlines in teardown or setup |
+| Status line cursor model | `createVolumeLineWriter` lines always end with `\n`; do not add extra newlines in teardown or setup |
 
 ---
 
@@ -102,7 +110,7 @@ Derived from `docs/learnings/interactive-cli-and-reviews.md`:
 
 ## What agents should avoid
 
-- Splitting `src/cli.ts` into multiple files unless the file genuinely exceeds a single cohesive responsibility. The current structure is intentional.
-- Adding a test framework — there are no tests and no test runner is configured.
+- Duplicating parse/validation logic outside `src/helpers.ts` — keep a single source of truth for testable behavior.
+- Adding a heavy test framework — `node:test` + `test/*.test.cjs` is enough for unit tests.
 - Changing `bufferDuration` (100 ms) or `SAMPLE_RATE` (44100) without understanding the downstream effects on the pull callback timing.
 - Touching `LEAK` or `INTEGRATOR_SCALE` without understanding the noise spectrum implications; these values were tuned by ear.
