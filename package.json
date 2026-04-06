@@ -1,5 +1,5 @@
 {
-  "name": "muril",
+  "name": "@skelogh/muril",
   "version": "0.1.0",
   "description": "muril — stream brown noise to your default audio output (more noise types planned)",
   "keywords": [
@@ -22,6 +22,9 @@
     "url": "https://github.com/SkeloGH/muril/issues"
   },
   "homepage": "https://github.com/SkeloGH/muril#readme",
+  "publishConfig": {
+    "access": "public"
+  },
   "bin": {
     "muril": "dist/cli.js"
   },

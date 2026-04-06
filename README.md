@@ -11,14 +11,16 @@ Audio output uses [`@echogarden/audio-io`](https://github.com/echogarden-project
 
 ## Install
 
+The package is published on npm as **`@skelogh/muril`** (scoped name required by the registry). The CLI command is still **`muril`**.
+
 ```bash
-npm install muril
+npm install @skelogh/muril
 ```
 
 ## Run with npx
 
 ```bash
-npx muril
+npx @skelogh/muril
 ```
 
 That runs the `muril` binary from the package (no global install required).
