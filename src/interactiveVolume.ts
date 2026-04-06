@@ -8,7 +8,7 @@ import type { Key } from "node:readline";
 export const VOLUME_STEP = 0.05;
 
 export type StdinKeypressHandlers = {
-  isInterruptKey: (str: string, key: Key | undefined) => boolean;
+  isInterruptKey: (str: string | undefined, key: Key | undefined) => boolean;
   onInterrupt: () => void;
   onVolumeUp: () => void;
   onVolumeDown: () => void;
@@ -36,7 +36,7 @@ export function bindStdinKeypress(
   stdin.setRawMode(true);
   stdin.resume();
 
-  const onKeypress = (str: string, key: Key | undefined): void => {
+  const onKeypress = (str: string | undefined, key: Key | undefined): void => {
     if (handlers.isInterruptKey(str, key)) {
       handlers.onInterrupt();
       return;

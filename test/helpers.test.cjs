@@ -47,4 +47,6 @@ test("isInterruptKey", () => {
   assert.equal(isInterruptKey("\u0003", undefined), true);
   assert.equal(isInterruptKey("x", { ctrl: true, name: "c" }), true);
   assert.equal(isInterruptKey("x", { name: "up" }), false);
+  assert.equal(isInterruptKey(undefined, { name: "up" }), false);
+  assert.equal(isInterruptKey(undefined, undefined), false);
 });

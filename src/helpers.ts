@@ -79,10 +79,14 @@ export function parseCliArgs(args: string[]): ParsedCli {
 
 /**
  * Raw mode often delivers Ctrl+C as ETX (0x03) only; `key` may be undefined or not `name: "c"`.
+ * `str` may be undefined for some keys (e.g. arrows) — `emitKeypressEvents` still invokes the listener.
  */
-export function isInterruptKey(str: string, key: Key | undefined): boolean {
+export function isInterruptKey(str: string | undefined, key: Key | undefined): boolean {
   if (key?.ctrl === true && key.name === "c") {
     return true;
+  }
+  if (str === undefined || str.length === 0) {
+    return false;
   }
   for (let i = 0; i < str.length; i += 1) {
     if (str.charCodeAt(i) === 3) {
